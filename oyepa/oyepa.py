@@ -874,6 +874,8 @@ class CompletionsQListWidget(NicerQListWidget):
     
     pass
 
+
+
 class TagSelector(QWidget):
     
     
@@ -1603,6 +1605,7 @@ class MatchingDocs(QWidget):
     
     pass
 
+
 def do_tagger(path, parentWindow = None):
     
     dialog = QDialog(parentWindow)
@@ -1750,6 +1753,8 @@ def do_search(dirsInCmdLine, parentWindow = None):
     untaggedButton.setFocusPolicy(Qt.NoFocus)
     widgetWithFocusBeforeUntaggedButtonToggled = None        
     
+    updateDocsButton = MyQPushButton("&Update Files");
+
     matchingDocsList = MatchingDocs(msgBar)
     
     winLayout.addWidget(topBox)
@@ -1762,6 +1767,7 @@ def do_search(dirsInCmdLine, parentWindow = None):
     else: extensionsWidget = None
     
     winLayout.addWidget(untaggedButton)
+    winLayout.addWidget(updateDocsButton)
     winLayout.addWidget(matchingDocsList)
     winLayout.addWidget(msgBar)
     
@@ -1781,6 +1787,8 @@ def do_search(dirsInCmdLine, parentWindow = None):
     escapeKeyPressed = QShortcut(Qt.Key_Escape, win)
     app.connect(escapeKeyPressed, SIGNAL("activated()"), win.doLeaveButton)
     
+    QObject.connect(updateDocsButton, SIGNAL("clicked()"), update_files)
+
     # and those which prompt an update of the list of matching docs
     
     def runQuerySlot():
