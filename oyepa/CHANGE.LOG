@@ -1,0 +1,147 @@
+Version 3.2 (3/May/2011)
+
+- Fixed a bug in the MimeMapper.getIconPath() method. My thanks to
+Jeffrey Carpeter for spotting this.
+
+Version 3.1 (21/Feb/2010)
+
+- The document browser now shows an icon indicating the type of each document
+as well as the date of the last modification. (By editing the configuration file
+cfg.py you can choose to use the "date of last access" instead.) You can also sort
+the list of results either by document name or by date.
+
+
+Version 3.0 (20/Apr/2009)
+
+- Tibor Csogor [tibi@tiborius.net] contributed code that enables much nicer
+handling of the list of directories the user speficies in the file
+~/.oyepa-dirs. In particular, 
+
+(i) entries in the ~/.oyepa-dirs ending with "/*" are understood as requests
+to watch that directory *and all directories underneath it*, recursing all
+the way down. Eg, a line "/home/user/project/*" will setup watches on
+/home/user/project *and all directories beneath it* (including, eg,
+/home/user/project/abc/def/ghj).
+
+(ii) a tilde in an line in ~/.oyepa-dirs is now understood as referring to
+the user's home dir. So, you can simply add a dir inside your home dir by
+adding the line "~/project" to the config file.
+
+Thank you for this cool code, Tibor!
+
+
+Version 2.9 (18/Feb/2008)
+
+- Updated code in oyepa-filemon.py so that it works with the latest version
+of pyinotify (0.8).
+
+Version 2.8 (18/Feb/2008)
+
+- Added a DONT_QUIT_INSTEAD_EXECUTE_CMD configuration var, which allows
+oyepa to run a specified command rather than quit when the user presses the
+leave/quit button in "search" mode. This is especially useful when oyepa is
+being used as a music jukebox (I use it to hibernate the computer using
+TuxOnIce). This option does not affect behavior when tagging a document.
+
+Version 2.7 (25/Dec/2007)
+
+- Fixed a bug in the install script (new file cfg.py wasn't getting
+installed).
+
+- Fixed a bug in the new MusicExtensionsWidget (part of the support for
+jukebox functionality), in which the getExtensions() method was returning a
+string as a list of chars rather than as a one-item list of strings.
+
+- Added a check to the music player (mp.py) so that the user cannot
+accidentally start multiple instances at the same time.
+
+
+Version 2.6 (15/Dec/2007)
+
+- Documents stored as directories and those stored files are now handled in
+the same way (only exceptions being (i) when they lack an extension and
+(ii) that we always offer a way to "open" a dir without an extension,
+namely, using the TERM_HACK).
+
+- We no longer record a default app to open extensionless (file) documents.
+
+- Made a bunch of previously hardcoded decisions configurable in order to
+allow this code to be customized for specific settings (eg, run a music
+jukebox on your computer).
+
+- Added the musicplayer.py script. It basically uses mplayer to play the
+contents of directories holding digital music files. I use it as the app to
+open directories with the extension ".album".
+
+
+
+Version 2.5 (1/Aug/2007)
+
+- Fixed bug which prevented user from renaming a tag when that operation
+would merge two tags.
+
+- wnote now allows the user to select which of the previously created notes
+she wants to resume editing (by displaying the first line of text).
+
+- Timestamp used to sort documents is now configurable (defined on top of
+fslayer.py). By default mtime is now used (previously I was using atime).
+
+- wnote now uses radio buttons rather than checkboxes (since that is the
+convention for exclusive groups of buttons).
+
+
+Version 2.4 (25/Feb/2007)
+
+- Fixed bug causing an exception whenever an attempt was made to
+retag/rename a doc from within the document locator dialog.
+
+- Exceptions are now reported through a GUI dialog.
+
+- Simplified installation process: oyepa-filemon can now simply be started
+from the user's xinitrc. It now handles SIGHUP signals, and as such
+automatically cleans up after itself when the X server is shut down.
+
+- oyepa-filemon can now be (cleanly) shutdown by sending it a signal; no
+longer does it quit by having the ~/.oeypa-filemon.running file removed.
+
+
+Version 2.3 (19/Feb/2007)
+
+- Brief messages to the user are now conveyed through a unobtrusitve "status
+bar" at the bottom, as opposed to those annoying messageboxes.
+
+- Double-clicking on a selected tag now deselects it.
+
+- Upon selecting a document the default app is now identified in the status
+bar.
+
+
+Version 2.2 (16/Feb/2007)
+
+- Fixed spawning of new processes, so that defunct/zombie processes are no
+longer left lying around.
+
+Version 2.1 (5/Feb/2007)
+
+- Fixed QString -> python string conversions in wnote.py by converting
+QStrings to toLatin1() 
+
+Version 2.0 (20/Jan/2007)
+
+- Complete rewrite, now entirely in Python+(Py)Qt!
+
+- Revamped document locator:
+
+  	   * now supports document copying/moving/removing
+
+	   * now has file type <-> default "open with" app memory
+
+	   * now able to list untagged documents
+	   
+- Added wnote utility for easy creation of (tagged) notes.
+
+- And, most importantly... name change! : )
+
+Version 1.1 (12/Nov/2006)
+
+- added a GUI document locator/browser!

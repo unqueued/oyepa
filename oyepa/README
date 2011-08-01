@@ -1,0 +1,258 @@
+oyepa - a way to organize (and locate) your documents through 
+----- the use of tags
+
+
+Written by Manuel Arriaga (manuelarriaga@gmail.com).
+
+Copyright (C) 2007-2011 Manuel Arriaga Licensed under the GNU General Public
+License version 2. See the file COPYING for details.
+
+
+Version: 3.2 (3/May/2011)
+-------
+
+
+Notes 
+-----
+
+oyepa is useless for you if you don't do all of your computing from within
+an X session. That is because tagging is done through a X dialog; if you are
+not running X, you won't get the dialog and hence won't tag any documents you
+create.
+
+If you just want to learn more about oeypa skip to the "Running oyepa"
+section.
+
+
+Requirements 
+------------
+
+- Python >=2.5
+- Qt >= 4.2
+- PyQt (if you are installing it manually, note that PyQt requires SIP; both
+  are available from http://www.riverbankcomputing.co.uk)
+  
+If you wish to be automatically prompted to tag new documents, then you
+will also need:
+
+- Linux >= 2.6.15 compiled with inotify support
+- pyinotify >=0.8 (http://pyinotify.sourceforge.net)
+
+
+Installation 
+------------
+
+1) As root,
+
+# ./install.sh
+
+You can also do a local installation in your home dir; just dump the
+contents of this tarball wherever you find convenient and place symlinks
+called 'oyepa' and 'oyepa-filemon' (to oyepa.py and oyepa-filemon.py,
+respectively) somewhere in your path.
+
+2) As a user, create a file ~/.oyepa/dirs listing the dirs on which you want
+oyepa to operate. These paths can be either absolute or relative (to your
+home dir). Also, if you end a dir name with '/*' oyepa will assume you want
+it to recursively watch ALL (SUB)DIRS beneath it. Eg, if you have a line 
+'~/abc' only the dir 'abc' inside your home dir will be watched; if that line
+was changed into '~/abc/*' then the contents of all dirs beneath it would be 
+watched -- ~/abc/def, ~/abc/ghi, ~/abc/def/1, ~/abc/def/1/2, etc...
+
+3) Edit ~/.xinitrc (or the system-wide xinitrc) so that the command
+oyepa-filemon gets executed whenever you start X. If you use icewm as your
+window manager, e.g., then your ~/.xinitrx might look like:
+
+oyepa-filemon & 
+icewm
+
+Note: the ampersand ('&') must be present at the end of the line starting
+the file monitor, otherwise X won't start.
+
+4) You are hopefully done! You can always look into the cfg.py file (installed
+by default in /usr/local/oyepa) and tweak the configuration values to your
+liking.
+
+
+Running oyepa 
+-------------
+
+Every file you save inside one of the dirs listed in ~/.oyepa/dirs will
+bring up a dialog prompting you to tag it. (You can also rename that
+document by pressing Alt-C.) When you are done, just press "Done" (or
+Alt-Q). This is the way for you to provide metadata about your docs at the
+time you save them. If you prefer not to tag a document you have created
+right away, just use the "Leave unchanged" button (or press Alt-L).
+
+An alternative, particularly useful for importing your documents into oyepa,
+is simply to _move_ files into a dir being watched by oyepa. The dialog box
+prompting you to tag those files will also be shown on those occasions.
+
+On my computer, I have just a handful of dirs being watched (e.g.,
+"deliverables" for stuff I hand in/(e)mail to someone else; "notes" for
+notes I have taken; etc). I save my important files to these dirs and then
+tag them.
+
+Notice that by default oyepa does _not_ look for the creation of new files 
+inside directories which lie underneath those listed in ~/.oyepa/dirs (i.e.,
+it watches those dirs but "not recursively"). [If you want that kind of
+behavior, suffix the dirname with '/*'. Eg, listing '/dir1/*' in ~/.oyepa/dirs
+will make oyepa watch for the creation of files inside *any* folder below
+/dir1.] The default behavior allows the treatment of a directory (and all its 
+content) as if it were a single document: e.g., you can have an entire source code
+tree, or a directory full of pictures from the same occasion, be tagged (and come 
+up in the search results for any of those tags) without having to manually tag all
+the files inside that dir. Furthermore, since oyepa never introduces any changes to
+the contents of a dir stored "as a document", you can rest assured that, e.g., a 
+source code tree will not be affected in any way by being stored inside a oyepa dir.
+
+To make use of this feature, just try moving a directory containing a set of
+pictures or source files into a directory watched by oyepa. You will be
+prompted to tag the directory itself, not the individual files it contains.
+Suppose you tag the directory with 'vacations'. Now, when you run a search
+for documents tagged with 'vacations' you can simply run a photo album app
+(eg, gqview or digikam) on that dir.
+
+
+What about *locating* stuff? That is done by running the command 'oyepa' (or
+'ds', if you prefer a command line utility). On my system I have bound oyepa
+to a function key; it is pretty convenient to bring it up by simply pressing
+a key. Or you can place it in some easy-to-access menu of your desktop 
+environment.
+
+If called without any arguments, it will bring up the (admittedly ugly!) 
+GUI browser/document locator. When you have located the doc you wish to open
+in the "Matching docs" list, just highlight it and hit 'enter'/'return' to
+open it with the default app for that file type. By right-clicking on the
+entry describing a doc, you can choose among copy/move/remove/'open with'.
+(I wanted to make the first two entries in the pop-up menu grayed out, but
+on my system doing so makes them almost illegible.)
+
+The 'open with' dialog is just as ugly as the rest of the GUI (perhaps even
+a bit _uglier_!). You need to provide the name by which oyepa will refer to
+the app in the future (eg, 'OpenOffice Writer') and the command which needs
+to be run to execute it (eg, 'swriter'). After you defined such an (appname,
+command) pair, in the future you can simply enter the name of an app and
+oyepa will fill in the 'command' field for you. Applications are run by
+appending the path to the document you selected to the 'command' shown in
+the dialog. This works for most apps. If you need to execute a command where
+the filepath of the document should show up somewhere other than at the end
+of the command, just replace it with a percentage sign. Eg, to copy the doc
+to /home/m/doc_copy, you would enter the command
+
+cp % /home/m/doc_copy
+
+(I am aware that this interface could be a lot friendlier; if you would like
+to help with it, just get in touch!)
+
+More useful stuff to keep in mind while using this code:
+
+* If you call 'oyepa' followed by a filepath, it will bring up a dialog
+which allows you to rename and/or retag that document. You should refrain
+from changing the tags and/or name of a document by renaming it with 'mv' or
+a regular file browser. 
+
+* To DEselect a tag, highlight it in the "selected tags" listview and press
+either 'd' or the 'delete' key. Or right-click on it.
+
+* Some keyboard shortcuts aren't shown properly (at least on my system).
+Note that you can modify the document name (when tagging a doc) by pressing 
+Alt-C. (That's what the weird capitalization is meant to convey.)
+
+* A simple command line util is included. It is called 'ds' (similar to ls?)
+and performs tag/keyword searches on directories. It is invoked as
+
+$ ds [keyword1 keyword2 ...] [dir1/ dir2/ ...]
+
+It will look for docs in dir1, dir2, ... which have a filename containg the
+specified keywords/tags. Notice that directories are distinguished from
+keywords by their trailing slash (for once, the slash matters!). I find this
+nice, since Bash's tab-completion feature appends those for me. If you don't
+specify any dir(s), the search will be performed on the current working dir.
+Similarly, if you don't specify any keywords, all files/dirs are shown. A
+single command line option is accepted: invoking
+
+$ ds -u 
+$ ds -u dir1/ [dir2/ ...]
+
+will list all untagged documents (either in all dirs or those specified in
+the command line).
+
+* A simple utility called 'wnote' is also installed. On my machine I have it
+bound to a function key; pressing that key fires up my text editor and then
+prompts me to name/tag the note I have just created. You can leave a note
+untitled and untagged by either clicking 'cancel' or just pressing the
+Escape key. In either case, the note will NOT be lost. Upon starting, it
+checks for untagged/untitled notes in your home dir and asks you whether you
+would like to tag those or start a new note. Nothing flashy, but I find it
+pretty useful. (For it to work correctly, you need to ensure that (i) the
+NOTES_DIR defined at the top of wnote.py is listed in you ~/.oyepa/dirs
+file and (ii) EDITOR_CMD at the top of the wnote.py file is set to the name
+of the text editor you want to use.) Optionally, you can set up your text 
+editor to automatically place the current at the top of files created by wnote
+(easy to do with jed).
+
+That is it! 
+
+
+How does it work?  
+-----------------
+
+oyepa "attaches" tags to a document in the most trivial way: by inserting
+them into the document's filename. Yes, this places a limit on how many tags
+you can add to a document (and how long those tags can be). This is the only
+way I found of appending tags to a document which respects two simple design
+goals: to (i) keep the tags "with the document" as much as possible subject
+to (ii) never modifying the file itself. Basically, I didn't want to
+concentrate all metadata on a single, external file liable to deletion
+and/or "being left behind" when moving the docs. The only alternative that I
+know of -- placing this metadata into file attributes, which some
+filesystems support -- was ruled out since these attributes currently are
+very fragile (both portability across filesystems as well as support from
+common archiving tools are issues). In my usage of oyepa the restriction on
+filename length has never been a problem; your mileage may vary.
+
+
+Also note that when you "tag" a document the file itself is never
+immediately renamed: we simply store the new name for it in a hidden
+".updates" file inside that dir. The document is only actually renamed when
+you quit your X session and the file monitor (oyepa-filemon) is stopped;
+that occasion is assumed to be safe for the rename operation, meaning that
+we expect no applications to have that file open (and possibly notice that
+the file they were previously writing to no longer exists). Yes, this is
+ugly. But it works. : )
+
+
+There are other very cool projects with the same (or similar) goals as
+oyepa. You might want to take a look at the following:
+
+- Berndtsson Stefan's lafs [http://www.nocrew.org/~stefan/lafs]
+- Stephen Hahn's tag [http://tinyurl.com/fhopa]
+- Peter Szabo's movemetafs
+[http://www.inf.bme.hu/~pts/movemetafs-latest.tar.gz]
+
+(Let me know about any others!)
+
+Personally, I am partial to the "tags-encoded-into-the-path" approach, which
+most people seem to dislike for understandable reasons.
+
+
+Limitations:
+-----------
+
+
+Well, the major annoyance is that an application's "open" dialog becomes
+useless. This doesn't bother me, but will most probably be a deal-breaker
+for some people. 
+
+Possible ways around it are: (i) a 'fake' directory tree populated with
+symlinks to the actual documents, in which descending into a subdir
+represents an intersection with the tag of the same name;
+(ii) some FUSE-based magic.
+
+Contact 
+-------
+
+oyepa was written by me, Manuel Arriaga. Feel free to contact me at
+marriaga@stern.nyu.edu with questions, suggestions, bug reports or wathever
+else crosses your mind.
