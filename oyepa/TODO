@@ -1,0 +1,63 @@
+========
+
+
+0) When originally tagging a doc, check if it lacks an extension. If so,
+prompt user to enter one.
+
+1) filemon should (? think!) be able to update pending updates file when a
+doc is simply externally renamed. (Came across this problem when I opened an
+xterm to append an extension to a dir I had just imported into a doc
+repository.)
+
+
+* Problems:
+-----------
+
+- Trouble when renaming a tag (ie, there is a filename which would become 
+too long) should be detected _before_ we have renamed some of the docs). 
+Currently the operation is aborted half-way through, leaving both tags 
+in existence. (Though that can always be undone by merging the two tags:
+just rename "newtag" back to "oldtag").
+
+* Features to add (short term):
+------------------------------
+
+- Allow doc actions to be run by pressing 'o' for 'open with', 'c' for
+'copy', 'm' for 'move', 'd' for delete and 'r' for rename/retag.
+
+- Allow tagging of quotations inside a note. This would be very nice.
+(Currently, when writing about a book I have read, I just add all the
+tags to the note about the book which contains all the citations, not
+a good system at all.)
+
+
+- Add "change extension" button to dialog in case of (i) dirs and (ii) files
+without an extension.
+
+- Add words with +3/4 chars found in docnames to list of suggested
+completions.
+
+
+* Features to add (longer term):
+-------------------------------
+
+- Implement way to allow use of applications' "open" dialogs. Either a
+symlink dirtree or some FUSE-based trickery.
+
+- Possibly use pyinotify also in the GUI to keep matching docs updated as
+file system contents change. (Ie, add/remove matching docs as such files are
+created/deleted.)
+
+
+* Make it faster:
+----------------
+
+- The GUI document locator is awfully inefficient: it reruns the query
+defined in the GUI virtually any time you (de)select a tag or press a
+button. The operations accessible by right-clicking on a doc
+(copy/move/remove/retag-rename) should not require the query to be rerun.
+
+- Pass the most recent query results back to runQuery(); that would allow it
+to work incrementally (eg, "previous query was *narrowed down* by adding the
+third search term 'abc'")
+
