@@ -361,44 +361,7 @@ def main():
         
         # perform pending updates (and remove any lying around "internal ops" file)
         
-        for doc_dir in doc_dirs:
-            
-            updates_dic = read_pending_updates(doc_dir)
-            
-            for orig, new in updates_dic.copy().items(): # doesn not look like it is necessary, but let us iterate over a  copy of the dic just to be safe (since we will be removing items)
-                
-                oldpath = os.path.join(doc_dir, orig)
-                newpath = os.path.join(doc_dir, new)
-                
-                if os.path.exists(newpath): 
-                    
-                    print "Skipping update of doc %s since newpath (%s) already exists"%(oldpath,newpath)
-                    
-                elif not os.path.exists(oldpath): 
-                    
-                    print "Couldn't find doc %s, won't update it"%oldpath
-                    
-                else:
-                    
-                    try: os.rename(oldpath, newpath)
-                    except Exception, e: print "Unable to rename %s to %s [%s]"%(oldpath,newpath,str(e))
-                    
-                    pass
-                pass
-            
-            write_pending_updates(doc_dir, {}) # IMPORTANT!! : )
-            
-            # finally, just remove the "internal ops" list file that might be lying around
-            
-            oyepa_internal_ops_filepath = \
-            os.path.join(doc_dir, cfg.oyepa_internal_ops_filename)
-            
-            if os.path.exists(oyepa_internal_ops_filepath):
-                
-                try: os.unlink(oyepa_internal_ops_filepath)
-                except: print "Unable to remove an immediate disappearances file [%s]"%oyepa_internal_ops_filepath
-                pass
-            pass
+        update_files()
         
         # other stuff to do...
         
