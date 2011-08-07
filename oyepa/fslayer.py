@@ -198,7 +198,7 @@ def readDocDirList():
             i = os.path.join(user.home, i)
             pass
         
-        raw_doc_dirs.add(i)
+        raw_doc_dirs.add(unicode(i))
         
         pass
     

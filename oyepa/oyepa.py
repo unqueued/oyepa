@@ -315,7 +315,7 @@ class GetCopyMoveDestinationDialog(QDialog):
             
             pass
         
-        print "getDestPath() == " + str(destPath)
+        print "getDestPath() == " + unicode(destPath)
         return destPath
     
     pass
@@ -568,6 +568,7 @@ class DirSelector(QGroupBox):
     def updateSelectedDirs(self, cbox):
         
         dirName = str(cbox.property("abspath").toString().toLatin1())
+        #dirName = unicode(cbox.property("abspath").toString())
         
         if cbox.checkState() == Qt.Checked:
             
