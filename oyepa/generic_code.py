@@ -130,7 +130,7 @@ class NicerQListWidget(QListWidget):
         
         items = []
         
-        for i in range(self.count()): items.append(str(self.item(i).text().toLatin1()).lower().strip())
+        for i in range(self.count()): items.append(unicode(self.item(i).text().toUtf8(), 'utf-8').lower().strip())
         
         return items
     
@@ -213,7 +213,7 @@ class NicerQTableWidget(QTableWidget):
         
         items = []
         
-        for i in range(self.count()): items.append(str(self.item(i).text().toLatin1()).lower().strip())
+        for i in range(self.count()): items.append(unicode(self.item(i).text().toUtf8(),'utf-8').lower().strip())
         
         return items
     

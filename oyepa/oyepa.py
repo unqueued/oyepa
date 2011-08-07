@@ -201,7 +201,7 @@ class RenameTagDialog(QDialog):
             
             if self.exec_() == QDialog.Rejected: return None
             
-            newTag = str(self.lineedit.text().toLatin1()).strip().lower()
+            newTag = unicode(self.lineedit.text().toUtf8(), 'utf-8').strip().lower()
             
             if not validTag(newTag): QMessageBox.warning(None, "Rename tag", "Invalid tag!")
             
@@ -281,7 +281,7 @@ class GetCopyMoveDestinationDialog(QDialog):
             
             if self.exec_() == QDialog.Rejected: return None
             
-            dirname = str(self.dirLineedit.text().toLatin1()).strip()
+            dirname = unicode(self.dirLineedit.text().toUtf8(), 'utf-8').strip()
             dirname = os.path.abspath(dirname)
             
             if not os.path.isdir(dirname): QMessageBox.warning(None, self.winTitle, "Invalid dir name!")
@@ -315,7 +315,7 @@ class GetCopyMoveDestinationDialog(QDialog):
             
             pass
         
-        print "getDestPath() == " + unicode(destPath)
+        print "getDestPath() == " + unicode(destPath, 'utf-8')
         return destPath
     
     pass
@@ -334,7 +334,7 @@ class AppCmdDialog(QDialog):
     
     def updateForgetButton(self, text): # this function grays out the "forget" button depending on whether or not the user has entered a valid app name into that lineedit
         
-        self.forgetButton.setEnabled(str(text.toLatin1()) in self.appMem)
+        self.forgetButton.setEnabled(unicode(text.toUtf8(),'utf-8') in self.appMem)
         return
     
     def __init__(self, extension, isdir, parent):
@@ -514,15 +514,15 @@ class AppCmdDialog(QDialog):
     
     def updateCmdLineEdit(self, text):
         
-        if str(text.toLatin1()) in self.appMem.keys():
+        if unicode(text.toUtf8(), 'utf-8') in self.appMem.keys():
             
-            self.cmdLineEdit.setText(self.appMem[str(text.toLatin1())])
+            self.cmdLineEdit.setText(self.appMem[unicode(text.toUtf8(), 'utf-8')])
         else: self.cmdLineEdit.setText("")
         
         return
     
-    def getCmd(self): return str(self.cmdLineEdit.text().toLatin1()).strip()
-    def getAppName(self): return str(self.appNameLineEdit.text().toLatin1()).strip().lower()
+    def getCmd(self): return unicode(self.cmdLineEdit.text().toUtf8(), 'utf-8').strip()
+    def getAppName(self): return unicode(self.appNameLineEdit.text().toUtf8(), 'utf-8').strip().lower()
     
     pass
 
@@ -567,8 +567,7 @@ class DirSelector(QGroupBox):
     
     def updateSelectedDirs(self, cbox):
         
-        dirName = str(cbox.property("abspath").toString().toLatin1())
-        #dirName = unicode(cbox.property("abspath").toString())
+        dirName = unicode(cbox.property("abspath").toString().toUtf8(), 'utf-8')
         
         if cbox.checkState() == Qt.Checked:
             
@@ -615,7 +614,7 @@ class MusicExtensionsWidget(QGroupBox):
         else: self.currentChoice = cfg.FAKE_EXTENSION_FOR_DIRS
         
         self.emit(SIGNAL("extensionListChanged()"))
-        print "currentChoice: " + str(self.currentChoice)
+        print "currentChoice: " + unicode(self.currentChoice, 'utf-8')
         return
     
     def getExtensions(self): return [self.currentChoice] # IMPORTANT! If we just return a string "radio", then the caller will get a list ["r","a","d","i","o"]
@@ -649,7 +648,7 @@ class DefaultExtensionsWidget(QWidget):
     
     def getExtensions(self):
         
-        return str(self.lineedit.text().toLatin1()).strip().lower().split()
+        return unicode(self.lineedit.text().toUtf8(), 'utf-8').strip().lower().split()
     pass
 
 
@@ -677,10 +676,10 @@ class ExtensionsLineEdit(QLineEdit):
     
     def checkForChanges(self):
         
-        if self.previousText != str(self.text().toLatin1()).strip().lower():
+        if self.previousText != unicode(self.text().toUtf8(), 'utf-8').strip().lower():
             
             self.emit(SIGNAL("extensionListChanged()"))
-            self.previousText = str(self.text().toLatin1()).strip().lower()
+            self.previousText = unicode(self.text().toUtf8(), 'utf-8').strip().lower()
             pass
         
         return
@@ -740,7 +739,7 @@ class SelectedTagsQListWidget(NicerQListWidget):
         item = self.currentItem()
         if item == None: return
         
-        tag = str(item.text().toLatin1())
+        tag = unicode(item.text().toUtf8(), 'utf-8')
         
         self.takeItem(self.row(item))
         self.emit(SIGNAL("tagDeselected(QString)"), QString(tag))
@@ -814,7 +813,7 @@ class CompletionsQListWidget(NicerQListWidget):
     
     def selectTag(self, item):
         
-        tag = str(item.text().toLatin1())
+        tag = unicode(item.text().toUtf8(), 'utf-8')
         self.setCurrentItem(None) # at least here this works, while clearSelection() doesn't
         self.tagLineEdit.setText(tag)
         self.tagLineEdit.setFocus()
@@ -824,7 +823,7 @@ class CompletionsQListWidget(NicerQListWidget):
     
     def updateCompletions(self):
         
-        partialTag = str(self.tagLineEdit.text().toLatin1()).strip().lower()
+        partialTag = unicode(self.tagLineEdit.text().toUtf8(), 'utf-8').strip().lower()
         selectedTags = self.selectedListView.getItems()
         
         matchingTags = \
@@ -976,7 +975,7 @@ class TagSelector(QWidget):
         
         if item == None: return
         
-        oldTag = str(item.text().toLatin1()).strip().lower()
+        oldTag = unicode(item.text().toUtf8(), 'utf-8').strip().lower()
         
         if oldTag == None or len(oldTag) == 0: return
         
@@ -994,7 +993,7 @@ class TagSelector(QWidget):
         
         if item == None: return
         
-        tag = str(item.text().toLatin1()).strip().lower()
+        tag = unicode(item.text().toUtf8(), 'utf-8').strip().lower()
         
         question = "Are you SURE you want to remove the tag '%s' from all documents?"%tag
         
@@ -1031,7 +1030,7 @@ class TagSelector(QWidget):
             for i in range(self.selectedListView.count()):
                 
                 item = self.selectedListView.item(i)
-                if str(item.text().toLatin1()).lower().strip() == oldTag: item.setText(newTag)
+                if unicode(item.text().toUtf8(), 'utf-8').lower().strip() == oldTag: item.setText(newTag)
                 pass
             pass
         
@@ -1045,7 +1044,7 @@ class TagSelector(QWidget):
     
     def selectEnteredTag(self):
         
-        tag = str(self.tagLineEdit.text().toLatin1()).strip().lower()
+        tag = unicode(self.tagLineEdit.text().toUtf8(), 'utf-8').strip().lower()
         self.tagLineEdit.clear()
         
         if not validTag(tag):
@@ -1075,7 +1074,7 @@ class TagSelector(QWidget):
     
     def tagDeselected(self, tag):
         
-        tag = str(tag.toLatin1())
+        tag = unicode(tag.toUtf8(), 'utf-8')
         
         self.completionsListView.updateCompletions()
         
@@ -1110,7 +1109,7 @@ class DocNameWidget(QWidget):
         self.connect(self.nameLineEdit, SIGNAL("editingFinished()"), self.validateDocName)
         return
     
-    def getDocName(self): return str(self.nameLineEdit.text().toLatin1()).strip()
+    def getDocName(self): return unicode(self.nameLineEdit.text().toUtf8(), 'utf-8').strip()
     
     def switchToLineEdit(self):
         
