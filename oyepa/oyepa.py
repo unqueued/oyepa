@@ -25,7 +25,7 @@ import datetime, os, sys, user, pickle, time, threading
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from fslayer import Doc, getDocDirs, validTag, validDocName, getAllTags, runQuery, tagDoc, renameTag, removeTag,  getCurrentPureNameAndTagsForDoc, rebuildTagCache, split_purename_and_tags_from_filename, moveDocTo, removeDoc, copyDocTo
+from fslayer import Doc, getDocDirs, getDocDirHierarchy, validTag, validDocName, getAllTags, runQuery, tagDoc, renameTag, removeTag,  getCurrentPureNameAndTagsForDoc, rebuildTagCache, split_purename_and_tags_from_filename, moveDocTo, removeDoc, copyDocTo
 from generic_code import *
 
 import cfg
@@ -526,43 +526,90 @@ class AppCmdDialog(QDialog):
     
     pass
 
-class DirSelector(QGroupBox):
+
+class DirSelector(QTreeWidget):
     
-    def __init__(self, doc_dirs, dirsInCmdLine, parent = None):
+    def __init__(self, doc_dir_hierarchy, dirsInCmdLine, parent = None):
         
-        QGroupBox.__init__(self, "Search &in...", parent)
+        QTreeWidget.__init__(self,parent)
         
-        self.buttonGroup = QButtonGroup(self)
-        self.buttonGroup.setExclusive(False)
         
-        layout = QVBoxLayout()
+        #QGroupBox.__init__(self, "Search &in...", parent)
+        
+        #self.buttonGroup = QButtonGroup(self)
+        #self.buttonGroup.setExclusive(False)
+        
+        #layout = QVBoxLayout()
         
         self.selectedDirs = set()
         
+        if('HierarchyRootElements' in doc_dir_hierarchy):
+            hierarchyStack = []
+            stringIndex = 0;
+            treeItemIndex = 1;
+            childElementsIndex = 2;
+            lastElementIndex = -1;
+            
+            # Hier muss ich noch eine for-Schleife ueber alle Root-Elemente drum rum machen und das
+            # .pop hinter dem doc_dir_hierarchy['HierarchyRootElements'] wegmachen.
+            rootElements = doc_dir_hierarchy['HierarchyRootElements']
+            childElements = rootElements
+            while True:
+                while( len(childElements) > 0 ):
+                    childString = childElements.pop();
+                    childTreeItem = QTreeWidgetItem(QStringList(os.path.basename(childString)))
+                    
+                    if( len(hierarchyStack) == 0 ):
+                        self.addTopLevelItem(childTreeItem)
+                    else:
+                        hierarchyStack[lastElementIndex][treeItemIndex].addChild(childTreeItem)
+                                   
+                    if( childString in doc_dir_hierarchy ):
+                        stackElement = []
+                        stackElement.insert(stringIndex,childString)
+                        stackElement.insert(treeItemIndex, childTreeItem)
+                        stackElement.insert(childElementsIndex, childElements)   
+                        hierarchyStack.append(stackElement)
+                        
+                        childElements = doc_dir_hierarchy[childString]
+                if( len(hierarchyStack) - 1 == 0 ):
+                    break    
+                else:
+                    stackElement = hierarchyStack.pop()
+                    childElements = stackElement[childElementsIndex]
+                        
+        
+        #ExampleTreeItem2 = QTreeWidgetItem(QStringList(['ba']))
+        #ExampleTreeItem3 = QTreeWidgetItem(QStringList(['bi']))
+        #ExampleTreeItem1.addChild(ExampleTreeItem3)
+        
+        #self.addTopLevelItem(ExampleTreeItem1)        
+        #self.addTopLevelItem(ExampleTreeItem2)
+        
         # now setup the checkboxes
         
-        dirsInCmdLine = map(os.path.abspath, dirsInCmdLine)
+        #dirsInCmdLine = map(os.path.abspath, dirsInCmdLine)
         
         
-        for d in sorted(doc_dirs, key=os.path.basename):
+        #for d in sorted(doc_dirs, key=os.path.basename):
             
-            cbox = QCheckBox(os.path.basename(d))
-            cbox.setProperty("abspath", QVariant(QString(d)))
+            #cbox = QCheckBox(os.path.basename(d))
+            #cbox.setProperty("abspath", QVariant(QString(d)))
             
-            if len(dirsInCmdLine) == 0 or d in dirsInCmdLine:
+            #if len(dirsInCmdLine) == 0 or d in dirsInCmdLine:
                 
-                cbox.setCheckState(Qt.Checked)
-                self.selectedDirs.add(d)
+                #cbox.setCheckState(Qt.Checked)
+                #self.selectedDirs.add(d)
                 
-            else: cbox.setCheckState(Qt.Unchecked)
+            #else: cbox.setCheckState(Qt.Unchecked)
             
-            self.buttonGroup.addButton(cbox)
-            layout.addWidget(cbox)
-            pass
+            #self.buttonGroup.addButton(cbox)
+            #layout.addWidget(cbox)
+            #pass
         
-        self.connect(self.buttonGroup, SIGNAL("buttonClicked(QAbstractButton*)"), self.updateSelectedDirs)
-        layout.addStretch(1)
-        self.setLayout(layout)
+        #self.connect(self.buttonGroup, SIGNAL("buttonClicked(QAbstractButton*)"), self.updateSelectedDirs)
+        #layout.addStretch(1)
+        #self.setLayout(layout)
         return
     
     def updateSelectedDirs(self, cbox):
@@ -581,6 +628,62 @@ class DirSelector(QGroupBox):
     def getSelectedDirs(self): return self.selectedDirs
     
     pass
+
+#class DirSelector(QGroupBox):
+#    
+#    def __init__(self, doc_dirs, dirsInCmdLine, parent = None):
+#        
+#        QGroupBox.__init__(self, "Search &in...", parent)
+#        
+#        self.buttonGroup = QButtonGroup(self)
+#        self.buttonGroup.setExclusive(False)
+#        
+#        layout = QVBoxLayout()
+#        
+#        self.selectedDirs = set()
+#        
+#        # now setup the checkboxes
+#        
+#        dirsInCmdLine = map(os.path.abspath, dirsInCmdLine)
+#        
+#        
+#        for d in sorted(doc_dirs, key=os.path.basename):
+#            
+#            cbox = QCheckBox(os.path.basename(d))
+#            cbox.setProperty("abspath", QVariant(QString(d)))
+#            
+#            if len(dirsInCmdLine) == 0 or d in dirsInCmdLine:
+#                
+#                cbox.setCheckState(Qt.Checked)
+#                self.selectedDirs.add(d)
+#                
+#            else: cbox.setCheckState(Qt.Unchecked)
+#            
+#            self.buttonGroup.addButton(cbox)
+#            layout.addWidget(cbox)
+#            pass
+#        
+#        self.connect(self.buttonGroup, SIGNAL("buttonClicked(QAbstractButton*)"), self.updateSelectedDirs)
+#        layout.addStretch(1)
+#        self.setLayout(layout)
+#        return
+#    
+#    def updateSelectedDirs(self, cbox):
+#        
+#        dirName = unicode(cbox.property("abspath").toString().toUtf8(), 'utf-8')
+#        
+#        if cbox.checkState() == Qt.Checked:
+#            
+#            self.selectedDirs.add(dirName)
+#            
+#        else: self.selectedDirs.remove(dirName)
+#        
+#        self.emit(SIGNAL("selectedDirsChanged()"))
+#        return
+#    
+#    def getSelectedDirs(self): return self.selectedDirs
+#    
+#    pass
 
 class MusicExtensionsWidget(QGroupBox):
     
@@ -1719,12 +1822,13 @@ def do_search(dirsInCmdLine, parentWindow = None):
     dirSelector = None
     
     doc_dirs = getDocDirs()
+    doc_dir_hierarchy = getDocDirHierarchy()
     
-    if len(doc_dirs) > 1:
+    if len(doc_dir_hierarchy) > 1:
         
-        dirSelector = DirSelector(doc_dirs, dirsInCmdLine)
+        dirSelector = DirSelector(doc_dir_hierarchy, dirsInCmdLine)
 
-    elif not doc_dirs:
+    elif not doc_dir_hierarchy:
         
         QMessageBox.critical(None, "oyepa", \
         "Before using oyepa, you need to tell it where to find your documents.\n\nTo try it out, do the following:\n\n 1- create the file %s and add a line\n\n~/docs\n\n2- create a directory 'docs' in your home dir." % cfg.FILENAME_LISTING_DOC_DIRS)
