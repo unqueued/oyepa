@@ -527,13 +527,25 @@ class AppCmdDialog(QDialog):
     pass
 
 
-class DirSelector(QTreeWidget):
+class DirSelector(QTreeView):
     
     def __init__(self, doc_dir_hierarchy, dirsInCmdLine, parent = None):
         
-        QTreeWidget.__init__(self,parent)
-        bubu = QItemSelectionModel(QStandardItemModel())
-        #self.setSelectionModel(QItemSelectionModel.ToggleCurrent)
+        QTreeView.__init__(self,parent)
+        self.itemModel = QStandardItemModel()
+        self.setModel(self.itemModel)
+        self.selectionModel = QItemSelectionModel(self.itemModel)        
+        self.setSelectionModel(self.selectionModel)
+        #self.selectionModel.SelectionFlag = QItemSelectionModel.Toggle
+        self.setSelectionMode(QAbstractItemView.MultiSelection)
+        
+        
+        itemPrototype = QStandardItem()
+        itemPrototype.setCheckable(True)
+        itemPrototype.setTristate(True)
+        itemPrototype.setEditable(False)
+        #self.itemModel.setItemPrototype(itemPrototype)        
+              
         self.selectedDirs = set()
         
         if('HierarchyRootElements' in doc_dir_hierarchy):
@@ -543,58 +555,74 @@ class DirSelector(QTreeWidget):
             childElementsIndex = 2;
             lastElementIndex = -1;
             
-            # Hier muss ich noch eine for-Schleife ueber alle Root-Elemente drum rum machen und das
-            # .pop hinter dem doc_dir_hierarchy['HierarchyRootElements'] wegmachen.
             rootElements = doc_dir_hierarchy['HierarchyRootElements']
             childElements = rootElements
             while True:
                 while( len(childElements) > 0 ):
                     childString = childElements.pop();
-                    childTreeItem = QTreeWidgetItem(QStringList(os.path.basename(childString)))
-                    childTreeItem.setData(Qt.UserRole,0,QVariant(QString(childString)))
+                    childObject = QStandardItem.clone(itemPrototype)
+                    childObject.setText(QString(os.path.basename(childString)))
+                    #childTreeItem.setData(Qt.UserRole,0,QVariant(QString(childString)))
+                    
                     
                     if( len(hierarchyStack) == 0 ):
-                        self.addTopLevelItem(childTreeItem)
+                        self.itemModel.appendRow(childObject)
                     else:
-                        hierarchyStack[lastElementIndex][treeItemIndex].addChild(childTreeItem)
-                                   
+                        hierarchyStack[lastElementIndex][treeItemIndex].appendRow(childObject)
+                                                          
                     if( childString in doc_dir_hierarchy ):
                         stackElement = []
                         stackElement.insert(stringIndex,childString)
-                        stackElement.insert(treeItemIndex, childTreeItem)
+                        stackElement.insert(treeItemIndex, childObject)
                         stackElement.insert(childElementsIndex, childElements)   
                         hierarchyStack.append(stackElement)
                         
                         childElements = doc_dir_hierarchy[childString]
-                if( len(hierarchyStack) - 1 == 0 ):
+                if( ( len(hierarchyStack) == 0 ) and len(childElements) == 0 ):
                     break    
                 else:
                     stackElement = hierarchyStack.pop()
                     childElements = stackElement[childElementsIndex]
 
-        self.connect(self, SIGNAL("itemClicked(QTreeWidgetItem*, int)"), self.updateSelectedSingleDir)
-        self.connect(self, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), self.updateSelectedDirTree)
-                        
+        self.connect(self.itemModel, SIGNAL("itemChanged(QStandardItem*)"), self.checkItemChanged)
+        
         return
     
-    def updateSelectedSingleDir(self, TreeWidgetItem, col):
-        
-        #dirName = unicode(TreeWidgetItem.property("abspath").toString().toUtf8(), 'utf-8')
-        print "updateSelectedSingleDir reached"
-        dirName = TreeWidgetItem.data(Qt.UserRole,0)
-        if TreeWidgetItem.isSelected() == True:
-            self.setItemSelected(TreeWidgetItem,False)
-            self.selectedDirs.add(dirName)
+    #def selectDirTree(self, modelIndex):
+    def checkItemChanged(self, selectionRootElement):
+                                
+            def selectChildren(elementIndex, select):
+                rootElement = self.itemModel.itemFromIndex(elementIndex)
+                if( rootElement.hasChildren() ):
+                    for i in range( rootElement.rowCount() ):
+                        selectChildren(rootElement.child(i).index(),select)
+
+                if( select == True ):                                    
+                    self.selectionModel.select(elementIndex, QItemSelectionModel.Select)
+                else:
+                    self.selectionModel.select(elementIndex, QItemSelectionModel.Deselect)
+                return
             
-        else: 
-            self.selectedDirs.remove(dirName)
-            self.setItemSelected(TreeWidgetItem,True)
+            print "selected Dir Tree reached"
+
+            if( selectionRootElement.checkState() == Qt.Checked ):
+                
+                self.selectionModel.select(selectionRootElement.index(), QItemSelectionModel.Select)
+                if( selectionRootElement.hasChildren() ):
+                    selectChildren(selectionRootElement.index(), True)
+            else:
+                self.selectionModel.select(selectionRootElement.index(), QItemSelectionModel.Deselect)
+                if( selectionRootElement.hasChildren() ):
+                    selectChildren(selectionRootElement.index(), False)
+
+                    
+        #self.selectionModel.SelectionFlag = QItemSelectionModel.Toggle
+            
         
         #self.emit(SIGNAL("selectedDirsChanged()"))
-        return
+            return
     
-    def updateSelectedDirTree(self, QTreeWidgetItem, col):
-        pass
+    
     
     def getSelectedDirs(self): return self.selectedDirs
     
