@@ -532,15 +532,8 @@ class DirSelector(QTreeWidget):
     def __init__(self, doc_dir_hierarchy, dirsInCmdLine, parent = None):
         
         QTreeWidget.__init__(self,parent)
-        
-        
-        #QGroupBox.__init__(self, "Search &in...", parent)
-        
-        #self.buttonGroup = QButtonGroup(self)
-        #self.buttonGroup.setExclusive(False)
-        
-        #layout = QVBoxLayout()
-        
+        bubu = QItemSelectionModel(QStandardItemModel())
+        #self.setSelectionModel(QItemSelectionModel.ToggleCurrent)
         self.selectedDirs = set()
         
         if('HierarchyRootElements' in doc_dir_hierarchy):
@@ -558,6 +551,7 @@ class DirSelector(QTreeWidget):
                 while( len(childElements) > 0 ):
                     childString = childElements.pop();
                     childTreeItem = QTreeWidgetItem(QStringList(os.path.basename(childString)))
+                    childTreeItem.setData(Qt.UserRole,0,QVariant(QString(childString)))
                     
                     if( len(hierarchyStack) == 0 ):
                         self.addTopLevelItem(childTreeItem)
@@ -577,53 +571,30 @@ class DirSelector(QTreeWidget):
                 else:
                     stackElement = hierarchyStack.pop()
                     childElements = stackElement[childElementsIndex]
+
+        self.connect(self, SIGNAL("itemClicked(QTreeWidgetItem*, int)"), self.updateSelectedSingleDir)
+        self.connect(self, SIGNAL("itemDoubleClicked(QTreeWidgetItem*, int)"), self.updateSelectedDirTree)
                         
-        
-        #ExampleTreeItem2 = QTreeWidgetItem(QStringList(['ba']))
-        #ExampleTreeItem3 = QTreeWidgetItem(QStringList(['bi']))
-        #ExampleTreeItem1.addChild(ExampleTreeItem3)
-        
-        #self.addTopLevelItem(ExampleTreeItem1)        
-        #self.addTopLevelItem(ExampleTreeItem2)
-        
-        # now setup the checkboxes
-        
-        #dirsInCmdLine = map(os.path.abspath, dirsInCmdLine)
-        
-        
-        #for d in sorted(doc_dirs, key=os.path.basename):
-            
-            #cbox = QCheckBox(os.path.basename(d))
-            #cbox.setProperty("abspath", QVariant(QString(d)))
-            
-            #if len(dirsInCmdLine) == 0 or d in dirsInCmdLine:
-                
-                #cbox.setCheckState(Qt.Checked)
-                #self.selectedDirs.add(d)
-                
-            #else: cbox.setCheckState(Qt.Unchecked)
-            
-            #self.buttonGroup.addButton(cbox)
-            #layout.addWidget(cbox)
-            #pass
-        
-        #self.connect(self.buttonGroup, SIGNAL("buttonClicked(QAbstractButton*)"), self.updateSelectedDirs)
-        #layout.addStretch(1)
-        #self.setLayout(layout)
         return
     
-    def updateSelectedDirs(self, cbox):
+    def updateSelectedSingleDir(self, TreeWidgetItem, col):
         
-        dirName = unicode(cbox.property("abspath").toString().toUtf8(), 'utf-8')
-        
-        if cbox.checkState() == Qt.Checked:
-            
+        #dirName = unicode(TreeWidgetItem.property("abspath").toString().toUtf8(), 'utf-8')
+        print "updateSelectedSingleDir reached"
+        dirName = TreeWidgetItem.data(Qt.UserRole,0)
+        if TreeWidgetItem.isSelected() == True:
+            self.setItemSelected(TreeWidgetItem,False)
             self.selectedDirs.add(dirName)
             
-        else: self.selectedDirs.remove(dirName)
+        else: 
+            self.selectedDirs.remove(dirName)
+            self.setItemSelected(TreeWidgetItem,True)
         
-        self.emit(SIGNAL("selectedDirsChanged()"))
+        #self.emit(SIGNAL("selectedDirsChanged()"))
         return
+    
+    def updateSelectedDirTree(self, QTreeWidgetItem, col):
+        pass
     
     def getSelectedDirs(self): return self.selectedDirs
     
