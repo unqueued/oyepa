@@ -538,15 +538,12 @@ class DirSelector(QTreeView):
         self.setSelectionModel(self.selectionModel)
         #self.selectionModel.SelectionFlag = QItemSelectionModel.Toggle
         self.setSelectionMode(QAbstractItemView.MultiSelection)
-        
-        
+        self.setSortingEnabled(True)
+               
         itemPrototype = QStandardItem()
         itemPrototype.setCheckable(True)
         itemPrototype.setTristate(True)
         itemPrototype.setEditable(False)
-        #self.itemModel.setItemPrototype(itemPrototype)        
-              
-        self.selectedDirs = set()
         
         if('HierarchyRootElements' in doc_dir_hierarchy):
             hierarchyStack = []
@@ -556,14 +553,14 @@ class DirSelector(QTreeView):
             lastElementIndex = -1;
             
             rootElements = doc_dir_hierarchy['HierarchyRootElements']
-            childElements = rootElements
+            del doc_dir_hierarchy['HierarchyRootElements']
+            childElements = rootElements.copy()
             while True:
                 while( len(childElements) > 0 ):
                     childString = childElements.pop();
                     childObject = QStandardItem.clone(itemPrototype)
                     childObject.setText(QString(os.path.basename(childString)))
-                    #childTreeItem.setData(Qt.UserRole,0,QVariant(QString(childString)))
-                    
+                    childObject.setData(childString,Qt.UserRole+1)                    
                     
                     if( len(hierarchyStack) == 0 ):
                         self.itemModel.appendRow(childObject)
@@ -578,18 +575,29 @@ class DirSelector(QTreeView):
                         hierarchyStack.append(stackElement)
                         
                         childElements = doc_dir_hierarchy[childString]
-                if( ( len(hierarchyStack) == 0 ) and len(childElements) == 0 ):
+                        del doc_dir_hierarchy[childString]
+                        
+                if( ( len(hierarchyStack) <= 1 ) and len(childElements) == 0 ):
                     break    
                 else:
                     stackElement = hierarchyStack.pop()
                     childElements = stackElement[childElementsIndex]
-
-        self.connect(self.itemModel, SIGNAL("itemChanged(QStandardItem*)"), self.checkItemChanged)
+               
+        for k in doc_dir_hierarchy:
+            singleDirItem = QStandardItem.clone(itemPrototype)
+            singleDirItem.setText(QString(os.path.basename(k)))
+            singleDirItem.setData(childString,Qt.UserRole+1)
+            self.itemModel.appendRow(singleDirItem)
         
+        self.connect(self.itemModel, SIGNAL("itemChanged(QStandardItem*)"), self.selectDirTree)
+        self.connect(self, SIGNAL("clicked(QModelIndex)"), self.dirSelected)
+
+        self.selectAll()
+
         return
+    pass
     
-    #def selectDirTree(self, modelIndex):
-    def checkItemChanged(self, selectionRootElement):
+    def selectDirTree(self, selectionRootElement):
                                 
             def selectChildren(elementIndex, select):
                 rootElement = self.itemModel.itemFromIndex(elementIndex)
@@ -602,8 +610,7 @@ class DirSelector(QTreeView):
                 else:
                     self.selectionModel.select(elementIndex, QItemSelectionModel.Deselect)
                 return
-            
-            print "selected Dir Tree reached"
+            pass
 
             if( selectionRootElement.checkState() == Qt.Checked ):
                 
@@ -615,17 +622,22 @@ class DirSelector(QTreeView):
                 if( selectionRootElement.hasChildren() ):
                     selectChildren(selectionRootElement.index(), False)
 
-                    
-        #self.selectionModel.SelectionFlag = QItemSelectionModel.Toggle
-            
-        
-        #self.emit(SIGNAL("selectedDirsChanged()"))
+            self.emit(SIGNAL("selectedDirsChanged()"))
             return
+    pass
     
+    def dirSelected(self, modelIndex):
+        self.emit(SIGNAL("selectedDirsChanged()"))
+    pass
     
-    
-    def getSelectedDirs(self): return self.selectedDirs
-    
+    def getSelectedDirs(self):
+        selectedDirs = set() 
+        for i in self.selectedIndexes():
+            item = self.itemModel.itemFromIndex(i)
+            dirString = unicode(item.data(Qt.UserRole+1).toString().toUtf8(), 'utf-8')
+            selectedDirs.add(dirString)
+        
+        return selectedDirs
     pass
 
 #class DirSelector(QGroupBox):
@@ -1899,6 +1911,8 @@ def do_search(dirsInCmdLine, parentWindow = None):
         class RunQueryThread(ThreadWithPleaseWaitMessage):
             
             def run(self):
+                
+                bubu = dirSelector.getSelectedDirs()
                 
                 self.matches = runQuery(            \
                 tagSelector.getSelectedTags(),      \
