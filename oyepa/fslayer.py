@@ -179,6 +179,9 @@ def readDocDirHierarchy():
     raw_doc_dirs = set()
     
     for i in dirLines:
+
+        # removing comments
+        i = re.sub("#.*$", "",i)
         
         i = i.strip()
         
@@ -188,6 +191,7 @@ def readDocDirHierarchy():
             pass
         
         i = i.rstrip('/')
+        
         
         if len(i) == 0:
             
