@@ -19,7 +19,7 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from fslayer import readDocDirHierarchy, read_pending_updates, write_pending_updates
+from fslayer import read_doc_dirs, read_pending_updates, write_pending_updates, getDocDirs
 
 import os
 import sys, string, traceback # for the gui_excepthook function implemented below
@@ -27,7 +27,8 @@ import sys, string, traceback # for the gui_excepthook function implemented belo
 import cfg
 
 def update_files():
-    doc_dirs = readDocDirHierarchy()
+    read_doc_dirs()
+    doc_dirs = getDocDirs()
     for doc_dir in doc_dirs:
             
         updates_dic = read_pending_updates(doc_dir)

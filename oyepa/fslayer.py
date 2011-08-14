@@ -246,13 +246,6 @@ def readDocDirHierarchy():
     return new_doc_dir_hierarchy
 
 
-#def dirVisitor(new_doc_dirs, dirname, names): # helper function used by readDocDirHierarchy(); see above
-#    
-#    new_doc_dirs.add(dirname)
-#    return
-
-# This function provides basic exclusion rules for filenames
-
 def should_skip(filename):
     
     return filename[0] in ('.','#') or filename[len(filename)-1] =='~' or filename in cfg.FILENAMES_TO_IGNORE
@@ -271,7 +264,7 @@ def validTag(s):
 # BAD, since it will return the list as it was at the time if the import
 # statement
 
-def getDocDirs(): return doc_dir_hierarchy.keys()
+def getDocDirs(): return doc_dirs
 
 
 #Provides the hierarchy of doc directories to the GUI layer 
@@ -1047,13 +1040,24 @@ def remove_tags_in_path_from_cache_and_filename_from_pending_updates(path):
     
     return
 
+def read_doc_dirs():
+    global doc_dir_hierarchy
+    global doc_dirs 
+    doc_dir_hierarchy = readDocDirHierarchy()
+    doc_dirs = doc_dir_hierarchy.keys()
+    while( 'HierarchyRootElements' in doc_dirs ):
+        doc_dirs.remove('HierarchyRootElements')
+        
+    return
+
+
 # MODULE TOP LEVEL CODE ########################################
 
 
-doc_dir_hierarchy = readDocDirHierarchy()
-doc_dirs = doc_dir_hierarchy.keys()
-if( 'HierarchyRootElements' in doc_dir_hierarchy ):
-    doc_dirs.remove('HierarchyRootElements')
+doc_dir_hierarchy = {} 
+doc_dirs = set() 
+read_doc_dirs()
+
     
 
 
