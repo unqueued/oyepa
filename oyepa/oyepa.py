@@ -25,7 +25,7 @@ import datetime, os, sys, user, pickle, time, threading
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from fslayer import Doc, getDocDirs, getDocDirHierarchy, validTag, validDocName, getAllTags, runQuery, tagDoc, renameTag, removeTag,  getCurrentPureNameAndTagsForDoc, rebuildTagCache, split_purename_and_tags_from_filename, moveDocTo, removeDoc, copyDocTo
+from fslayer import Doc, getDocDirs, getDocDirHierarchy, validTag, validDocName, getAllTags, runQuery, tagDoc, renameTag, removeTag,  getCurrentPureNameAndTagsForDoc, rebuildTagCache, split_purename_and_tags_from_filename, moveDocTo, removeDoc, copyDocTo, read_doc_dirs
 from generic_code import *
 
 import cfg
@@ -529,7 +529,6 @@ class AppCmdDialog(QDialog):
 
 class DirSelector(QTreeView):
 
-    # Todo: Here the dirsInCmdLine argument is not parsed; 
     def __init__(self, doc_dir_hierarchy, dirsInCmdLine, parent = None):
         
         QTreeView.__init__(self,parent)
@@ -1935,8 +1934,21 @@ def do_search(dirsInCmdLine, parentWindow = None):
     escapeKeyPressed = QShortcut(Qt.Key_Escape, win)
     app.connect(escapeKeyPressed, SIGNAL("activated()"), win.doLeaveButton)
     
-    QObject.connect(updateDocsButton, SIGNAL("clicked()"), update_files)
+    def updateFilesSlot():
+        
+        update_files()
 
+        #matchingDocsList.latestQueryResults = None 
+        #matchingDocsList.update(matchingDocsList.latestQueryResults)
+
+        #readDocDirHierarchy()
+        read_doc_dirs()
+        doc_dir_hierarchy = getDocDirHierarchy()
+        dirSelector.updateDirs(doc_dir_hierarchy)
+        
+        runQuerySlot()
+    pass    
+        
     # and those which prompt an update of the list of matching docs
     
     def runQuerySlot():
@@ -1990,6 +2002,8 @@ def do_search(dirsInCmdLine, parentWindow = None):
         
         runQuerySlot()
         return
+    
+    QObject.connect(updateDocsButton, SIGNAL("clicked()"), updateFilesSlot)
     
     QObject.connect(tagSelector, SIGNAL("tagSelected(QString)"), runQuerySlot)
     QObject.connect(tagSelector, SIGNAL("tagDeselected(QString)"), runQuerySlot)
