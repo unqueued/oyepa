@@ -1478,7 +1478,7 @@ class MatchingDocs(QWidget):
         self.setLayout(box)
         
         self.latestQueryResults = None # we keep around a list of the most recent query results; this allows us not to rerun the query just because the user changed maxResults
-        
+               
         self.connect(self.numberResultsButton, SIGNAL("clicked()"), self.doMaxResultsDialog)
         return
     
@@ -1750,10 +1750,26 @@ class MatchingDocs(QWidget):
         return
     
     pass
-
-
-def do_tagger(path, parentWindow = None):
     
+
+        
+    #def keyPressEvent(self,event):
+    #    if (event.modifiers() & Qt.AltModifier): 
+    #        alt_pressed = True
+    #        print "Alt Pressed"
+    #    else:
+    #        alt_pressed = False
+    #    
+    #    print "Key: {}", event.key() 
+    #    
+    #    #if ( event.key() == Qt.Key_T ) and alt_pressed:
+    #    if ( event.key() == Qt.Key_T ):
+    #        print "T pressed" 
+    #
+    #pass        
+     
+def do_tagger(path, parentWindow = None):
+     
     dialog = QDialog(parentWindow)
     
     # get  most current purename and tags of the file referenced by this path
@@ -1852,87 +1868,38 @@ def do_tagger(path, parentWindow = None):
 
 
 def do_search(dirsInCmdLine, parentWindow = None):
-    
-    # set up interface
-    
-    win = QWidget(parentWindow);
-    win.setWindowTitle(cfg.searchWindowTitle)
-    
-    if cfg.runInFullScreenMode: win.showFullScreen()
-    
-    winLayout = QVBoxLayout()
-    
-    dirSelector = None
-    
-    doc_dirs = getDocDirs()
-    doc_dir_hierarchy = getDocDirHierarchy()
-    
-    if len(doc_dir_hierarchy) > 1:
-        
-        dirSelector = DirSelector(doc_dir_hierarchy, dirsInCmdLine)
+ 
+    # do some definitions first ... 
+ 
+    class KeyboardShortcutEventFilterObject(QObject):
+            
+        def __init__(self, parent=None):
+            super(KeyboardShortcutEventFilterObject, self).__init__(parent)
+        pass
+            
+        def eventFilter(self,object, event):
+            if(event.type() == QEvent.KeyPress):
+                if (event.modifiers() & Qt.ControlModifier): 
+                    control_pressed = True
+                else:
+                    control_pressed = False
+            
+                if   (control_pressed) and ( event.key() == Qt.Key_T or event.key() == Qt.Key_R):
+                    matchingDocsList.renameRetagDoc()
+                elif (control_pressed) and ( event.key() == Qt.Key_M ):
+                   matchingDocsList.moveDocTo()
+                elif (control_pressed) and ( event.key() == Qt.Key_C ):
+                    matchingDocsList.copyDocTo()
+                elif (control_pressed) and ( event.key() == Qt.Key_O ):
+                    matchingDocsList.openDocWith()
+                elif (control_pressed) and ( event.key() == Qt.Key_D ):
+                    matchingDocsList.removeDoc()
+                pass
+            
+            
+            return QWidget.eventFilter(self, object, event)
+        pass
 
-    elif not doc_dir_hierarchy:
-        
-        QMessageBox.critical(None, "oyepa", \
-        "Before using oyepa, you need to tell it where to find your documents.\n\nTo try it out, do the following:\n\n 1- create the file %s and add a line\n\n~/docs\n\n2- create a directory 'docs' in your home dir." % cfg.FILENAME_LISTING_DOC_DIRS)
-        return False
-    
-    msgBar = QLabel()
-    msgBar.setText("Ready")
-    
-    tagSelector = TagSelector("&Search for:", msgBar, [])
-    leaveButton = MyQPushButton(cfg.leaveButtonCaption)
-    
-    topBox = QWidget()
-    middleBox = QWidget()
-    
-    topBoxLayout = QHBoxLayout()
-    
-    if dirSelector != None: topBoxLayout.addWidget(dirSelector)
-    
-    topBoxLayout.addWidget(tagSelector)
-    topBoxLayout.addWidget(leaveButton)
-    topBox.setLayout(topBoxLayout)
-    
-    middleBoxLayout = QHBoxLayout()
-    
-    untaggedButton = MyQCheckBox("List &untagged")
-    untaggedButton.setFocusPolicy(Qt.NoFocus)
-    widgetWithFocusBeforeUntaggedButtonToggled = None        
-    
-    updateDocsButton = MyQPushButton("&Update Files");
-
-    matchingDocsList = MatchingDocs(msgBar)
-    
-    winLayout.addWidget(topBox)
-    
-    if cfg.ExtensionsWidgetClassToUse != None: 
-        
-        extensionsWidget = globals()[cfg.ExtensionsWidgetClassToUse](); # HACK ALERT
-        winLayout.addWidget(extensionsWidget)
-        
-    else: extensionsWidget = None
-    
-    winLayout.addWidget(untaggedButton)
-    winLayout.addWidget(updateDocsButton)
-    winLayout.addWidget(matchingDocsList)
-    winLayout.addWidget(msgBar)
-    
-    win.setLayout(winLayout)
-    win.show()
-    
-    # now draw up a bunch of signal-slot connections
-    
-    if cfg.DONT_QUIT_INSTEAD_EXECUTE_CMD: # if this is set, pressing the leaveButton does not exit the application but instead executes the cmd DONT_QUIT_INSTEAD_EXECUTE_CMD in a shell
-        
-        win.doLeaveButton = lambda: os.system(cfg.DONT_QUIT_INSTEAD_EXECUTE_CMD)
-        
-    else: win.doLeaveButton = win.close # default case, pressing "Leave" closes the window (and the app)
-    
-    QObject.connect(leaveButton, SIGNAL("clicked()"), win.doLeaveButton)
-    
-    escapeKeyPressed = QShortcut(Qt.Key_Escape, win)
-    app.connect(escapeKeyPressed, SIGNAL("activated()"), win.doLeaveButton)
     
     def updateFilesSlot():
         
@@ -2002,7 +1969,94 @@ def do_search(dirsInCmdLine, parentWindow = None):
         
         runQuerySlot()
         return
+ 
+    # and set up interface here
     
+    global app
+    
+    keyboardShortcuteventFilterObject = KeyboardShortcutEventFilterObject()
+    app.installEventFilter(keyboardShortcuteventFilterObject)
+
+    
+    win = QWidget(parentWindow);
+    win.setWindowTitle(cfg.searchWindowTitle)
+    
+    if cfg.runInFullScreenMode: win.showFullScreen()
+    
+    winLayout = QVBoxLayout()
+    
+    dirSelector = None
+    
+    doc_dirs = getDocDirs()
+    doc_dir_hierarchy = getDocDirHierarchy()
+    
+    if len(doc_dir_hierarchy) > 1:
+        
+        dirSelector = DirSelector(doc_dir_hierarchy, dirsInCmdLine)
+
+    elif not doc_dir_hierarchy:
+        
+        QMessageBox.critical(None, "oyepa", \
+        "Before using oyepa, you need to tell it where to find your documents.\n\nTo try it out, do the following:\n\n 1- create the file %s and add a line\n\n~/docs\n\n2- create a directory 'docs' in your home dir." % cfg.FILENAME_LISTING_DOC_DIRS)
+        return False
+    
+    msgBar = QLabel()
+    msgBar.setText("Ready")
+    
+    tagSelector = TagSelector("&Search for:", msgBar, [])
+    leaveButton = MyQPushButton(cfg.leaveButtonCaption)
+    
+    topBox = QWidget()
+    middleBox = QWidget()
+    
+    topBoxLayout = QHBoxLayout()
+    
+    if dirSelector != None: topBoxLayout.addWidget(dirSelector)
+    
+    topBoxLayout.addWidget(tagSelector)
+    topBoxLayout.addWidget(leaveButton)
+    topBox.setLayout(topBoxLayout)
+    
+    middleBoxLayout = QHBoxLayout()
+    
+    untaggedButton = MyQCheckBox("List &untagged")
+    untaggedButton.setFocusPolicy(Qt.NoFocus)
+    widgetWithFocusBeforeUntaggedButtonToggled = None        
+    
+    updateDocsButton = MyQPushButton("&Update Files");
+
+    matchingDocsList = MatchingDocs(msgBar)
+    
+    winLayout.addWidget(topBox)
+    
+    if cfg.ExtensionsWidgetClassToUse != None: 
+        
+        extensionsWidget = globals()[cfg.ExtensionsWidgetClassToUse](); # HACK ALERT
+        winLayout.addWidget(extensionsWidget)
+        
+    else: extensionsWidget = None
+    
+    winLayout.addWidget(untaggedButton)
+    winLayout.addWidget(updateDocsButton)
+    winLayout.addWidget(matchingDocsList)
+    winLayout.addWidget(msgBar)
+     
+    win.setLayout(winLayout)
+    win.show()
+    
+    # now draw up a bunch of signal-slot connections
+    
+    if cfg.DONT_QUIT_INSTEAD_EXECUTE_CMD: # if this is set, pressing the leaveButton does not exit the application but instead executes the cmd DONT_QUIT_INSTEAD_EXECUTE_CMD in a shell
+        
+        win.doLeaveButton = lambda: os.system(cfg.DONT_QUIT_INSTEAD_EXECUTE_CMD)
+        
+    else: win.doLeaveButton = win.close # default case, pressing "Leave" closes the window (and the app)
+    
+    QObject.connect(leaveButton, SIGNAL("clicked()"), win.doLeaveButton)
+    
+    escapeKeyPressed = QShortcut(Qt.Key_Escape, win)
+    app.connect(escapeKeyPressed, SIGNAL("activated()"), win.doLeaveButton)
+     
     QObject.connect(updateDocsButton, SIGNAL("clicked()"), updateFilesSlot)
     
     QObject.connect(tagSelector, SIGNAL("tagSelected(QString)"), runQuerySlot)
@@ -2066,7 +2120,7 @@ if __name__=="__main__": #and False: # enable this to run pychecker
     sys.excepthook = gui_excepthook
     
     app.connect(qApp, SIGNAL("lastWindowClosed()"), qApp, SLOT("quit()"))
-    
+     
     if len(sys.argv) == 1 or sys.argv[1] == "--dirs": 
         
         dirsInCmdLine = []
