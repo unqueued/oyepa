@@ -29,7 +29,9 @@ import cfg
 def update_files():
     read_doc_dirs()
     doc_dirs = getDocDirs()
-    for doc_dir in doc_dirs:
+    while len(doc_dirs) > 0:
+        
+        doc_dir = doc_dirs.pop()
             
         updates_dic = read_pending_updates(doc_dir)
             
@@ -48,9 +50,15 @@ def update_files():
                     
             else:
                     
-                try: os.rename(oldpath, newpath)
+                try: 
+                    os.rename(oldpath, newpath)
                 except Exception, e: print "Unable to rename %s to %s [%s]"%(oldpath,newpath,str(e))
-                    
+                else:
+                    if os.path.isdir(newpath):
+                        for doc_dirs_element in doc_dirs:                             
+                            if oldpath in doc_dirs_element:
+                                i = doc_dirs.index(doc_dirs_element)
+                                doc_dirs[i] =  doc_dirs_element.replace(oldpath,newpath)
                 pass
             pass
             
@@ -67,7 +75,7 @@ def update_files():
             except: print "Unable to remove an immediate disappearances file [%s]"%oyepa_internal_ops_filepath
             pass
         pass
-
+    
 
 def generate_unused_numbered_filename(basename, ext, workdir=None):
     

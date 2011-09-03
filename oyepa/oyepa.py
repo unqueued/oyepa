@@ -528,23 +528,46 @@ class AppCmdDialog(QDialog):
 
 
 class DirSelector(QTreeView):
-    
+
+    # Todo: Here the dirsInCmdLine argument is not parsed; 
     def __init__(self, doc_dir_hierarchy, dirsInCmdLine, parent = None):
         
         QTreeView.__init__(self,parent)
         self.itemModel = QStandardItemModel()
+        
+        
         self.setModel(self.itemModel)
         self.selectionModel = QItemSelectionModel(self.itemModel)        
         self.setSelectionModel(self.selectionModel)
-        #self.selectionModel.SelectionFlag = QItemSelectionModel.Toggle
         self.setSelectionMode(QAbstractItemView.MultiSelection)
         self.setSortingEnabled(True)
-               
+                      
+        self.updateDirs(doc_dir_hierarchy)
+        
+        self.connect(self.itemModel, SIGNAL("itemChanged(QStandardItem*)"), self.selectDirTree)
+        self.connect(self, SIGNAL("clicked(QModelIndex)"), self.dirSelected)
+        
+        if( len(dirsInCmdLine) == 0):
+            self.selectAll()
+        else:
+            self.selectDirs(dirsInCmdLine)
+
+        return
+    pass
+    
+    def updateDirs(self, doc_dir_hierarchy):
+
+        # Delete the contents of the item model to start from a blank slate
+        self.itemModel.clear()
+
+        # Define the prototype element for the dir view
         itemPrototype = QStandardItem()
         itemPrototype.setCheckable(True)
         itemPrototype.setTristate(True)
         itemPrototype.setEditable(False)
         
+        # Now add all entries that will come into the item model in a tree view
+        # (and delete them after they were added)
         if('HierarchyRootElements' in doc_dir_hierarchy):
             hierarchyStack = []
             stringIndex = 0;
@@ -583,20 +606,15 @@ class DirSelector(QTreeView):
                     stackElement = hierarchyStack.pop()
                     childElements = stackElement[childElementsIndex]
                
+        # Now add all of the remaining entries in doc_dir_hierarchy, which go into the item model as a list  
         for k in doc_dir_hierarchy:
             singleDirItem = QStandardItem.clone(itemPrototype)
             singleDirItem.setText(QString(os.path.basename(k)))
             singleDirItem.setData(childString,Qt.UserRole+1)
             self.itemModel.appendRow(singleDirItem)
         
-        self.connect(self.itemModel, SIGNAL("itemChanged(QStandardItem*)"), self.selectDirTree)
-        self.connect(self, SIGNAL("clicked(QModelIndex)"), self.dirSelected)
-
-        self.selectAll()
-
-        return
     pass
-    
+
     def selectDirTree(self, selectionRootElement):
                                 
             def selectChildren(elementIndex, select):
@@ -625,6 +643,21 @@ class DirSelector(QTreeView):
             self.emit(SIGNAL("selectedDirsChanged()"))
             return
     pass
+    
+    def selectDirs(self, dirsToSelect):
+    
+        dirsToSelect = map(os.path.abspath, dirsToSelect)
+               
+        for dirToSelect in dirsToSelect:
+            # First, get all elements with the same basename that we are looking for
+            indexToPropablySelect = self.itemModel.findItems(QString(os.path.basename(dirToSelect)),Qt.MatchRecursive)
+            if len(indexToPropablySelect) > 0:
+                for item in indexToPropablySelect:
+                    # Then check, just to be sure: Is the absolute path of the elements identical ...
+                    dirString = unicode(item.data(Qt.UserRole+1).toString().toUtf8(), 'utf-8')
+                    if(dirString == dirToSelect):
+                        self.selectionModel.select(item.index(), QItemSelectionModel.Select)
+                    
     
     def dirSelected(self, modelIndex):
         self.emit(SIGNAL("selectedDirsChanged()"))
@@ -1911,9 +1944,7 @@ def do_search(dirsInCmdLine, parentWindow = None):
         class RunQueryThread(ThreadWithPleaseWaitMessage):
             
             def run(self):
-                
-                bubu = dirSelector.getSelectedDirs()
-                
+                              
                 self.matches = runQuery(            \
                 tagSelector.getSelectedTags(),      \
                 extensionsWidget.getExtensions() if extensionsWidget != None else [], \
